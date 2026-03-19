@@ -1,19 +1,14 @@
-# ── Stage 1: deps ────────────────────────────────────────────────────────────
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+FROM node:20-alpine
 
-# ── Stage 2: final image ──────────────────────────────────────────────────────
-FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Non-root user for security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+COPY package.json ./
 
-COPY --from=deps /app/node_modules ./node_modules
+RUN npm install --omit=dev
+
 COPY . .
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 RUN chown -R appuser:appgroup /app
 USER appuser
 
