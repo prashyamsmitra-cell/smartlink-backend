@@ -3,7 +3,7 @@ const BASE = BigInt(CHARSET.length); // 62
 const CODE_LENGTH = 7; // produces ~3.5 trillion unique combinations
 const MAX_ATTEMPTS = 5;
 
-const { query } = require('../database/connection');
+const urlModel = require('../models/urlModel');
 const logger = require('./logger');
 
 /**
@@ -29,7 +29,7 @@ function generateCode() {
     randomBytes[i] = Math.floor(Math.random() * 256);
   }
   const num = BigInt('0x' + randomBytes.toString('hex'));
-  return toBase62(num, CODE_LENGTH);
+  return toBase62(num).slice(-CODE_LENGTH);
 }
 
 /**
@@ -42,12 +42,9 @@ async function generateUniqueCode() {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const code = generateCode();
 
-    const { rows } = await query(
-      'SELECT id FROM urls WHERE short_code = $1',
-      [code]
-    );
+    const existing = await urlModel.findByShortCode(code);
 
-    if (rows.length === 0) {
+    if (!existing) {
       logger.debug('Generated unique short code', { code, attempt });
       return code;
     }

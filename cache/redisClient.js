@@ -7,6 +7,11 @@ let isConnected = false;
 const DEFAULT_TTL = 3600; // seconds (1 hour)
 
 function connectRedis() {
+  if (!process.env.REDIS_URL) {
+    logger.info('Redis URL not configured, cache disabled');
+    return Promise.resolve(null);
+  }
+
   return new Promise((resolve, reject) => {
     const client = new Redis(process.env.REDIS_URL, {
       maxRetriesPerRequest: 3,

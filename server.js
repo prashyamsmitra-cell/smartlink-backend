@@ -9,27 +9,30 @@ const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   try {
-    // Connect to PostgreSQL
-    await connectDB();
-    logger.info('✅ PostgreSQL connected');
+    if (process.env.DATABASE_URL) {
+      await connectDB();
+      logger.info('PostgreSQL connected');
 
-    // Run migrations — creates tables if they don't exist
-    await runMigrations();
-    logger.info('✅ Migrations complete');
+      await runMigrations();
+      logger.info('Migrations complete');
+    } else {
+      logger.warn('DATABASE_URL not set, using local JSON storage');
+    }
 
-    // Connect to Redis (non-fatal if it fails — app still works without cache)
     try {
       await connectRedis();
-      logger.info('✅ Redis connected');
+      if (process.env.REDIS_URL) {
+        logger.info('Redis connected');
+      }
     } catch (err) {
-      logger.warn('⚠️  Redis unavailable — running without cache', { error: err.message });
+      logger.warn('Redis unavailable, running without cache', { error: err.message });
     }
 
     app.listen(PORT, () => {
-      logger.info(`🚀 SmartLink server running on port ${PORT}`);
+      logger.info(`SmartLink server running on port ${PORT}`);
     });
   } catch (err) {
-    logger.error('❌ Failed to start server', { error: err.message });
+    logger.error('Failed to start server', { error: err.message });
     process.exit(1);
   }
 }

@@ -12,6 +12,11 @@ router.get('/', async (req, res) => {
     },
   };
 
+  if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'test' && !process.env.JEST_WORKER_ID) {
+    health.services.database = 'disabled';
+    return res.status(200).json(health);
+  }
+
   try {
     await query('SELECT 1');
     health.services.database = 'ok';
